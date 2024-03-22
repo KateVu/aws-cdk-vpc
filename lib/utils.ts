@@ -9,13 +9,13 @@ export enum subnetTypes {
     PRIVATE = "Private",
     DATA = "Data",
 }
-export type SubnetConfig = {
+export interface SubnetConfig {
     availabilityZone: string,
     ipAddress: string,
     mapPublicIpOnLaunch?: boolean
 }
 
-export type VpcConfig = {
+export interface VpcConfig {
     vpcName: string,
     ipAddresses: string
     publicSubnets: SubnetConfig[],
@@ -23,7 +23,7 @@ export type VpcConfig = {
     dataSubnets: SubnetConfig[]
 }
 
-export type naclRule = {
+export interface naclRule {
     ruleNumber: number,
     ruleAction: string,
     isIpV4Block: boolean,
