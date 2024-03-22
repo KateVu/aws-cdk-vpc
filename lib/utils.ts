@@ -1,5 +1,8 @@
 import { Stack, Tags } from 'aws-cdk-lib'
 import * as ec2 from 'aws-cdk-lib/aws-ec2'
+import * as fs from 'fs'
+import * as path from 'path'
+import * as yaml from 'js-yaml'
 
 export enum subnetTypes {
     PUBLIC = "Public",
@@ -31,6 +34,34 @@ export type naclRule = {
     icmp?: ec2.AclIcmp,
     direction: string
 }
+
+export interface AWSAccount {
+    name: string,
+    account_id: string
+}
+
+const getAccountIds = (filePath: string, fileName: string): AWSAccount[] => {
+    try {
+        const fileContents = fs.readFileSync(path.join(__dirname, filePath) + fileName, 'utf8')
+        const data = yaml.load(fileContents) as AWSAccount[]
+        return data
+    } catch (e) {
+        console.log(e)
+        throw new Error('readYamlFile: Cannot read file')
+    }
+}
+
+export const getAccountId = (accountName: string, filePath: string, fileName: string): string => {
+    const accountIds = getAccountIds(filePath, fileName)
+    const found = accountIds.find((item) => {
+        return item.name === accountName
+    })
+    if (found == undefined) {
+        throw new Error(`getAccountId: cannot get account id from account name ${accountName}`)
+    }
+    return found.account_id
+}
+
 
 /**
  * 
@@ -64,53 +95,53 @@ export const createAclTraffic = (protocol: string, startPort?: number, endPort?:
     }
 }
 
-  /**
-   * 
-   * @param stack 
-   * @param vpcid 
-   * @param vpcName 
-   * @param subnetConfig 
-   * @param publicRouteTable 
-   * @returns 
-   */
+/**
+ * 
+ * @param stack 
+ * @param vpcid 
+ * @param vpcName 
+ * @param subnetConfig 
+ * @param publicRouteTable 
+ * @returns 
+ */
 export const createPublicSubnet = (stack: Stack, vpcid: string, vpcName: string, subnetConfig: SubnetConfig, publicRouteTable: ec2.CfnRouteTable, listNATGateway: Map<string, ec2.CfnNatGateway>, nacls: ec2.NetworkAcl): ec2.Subnet => {
     const az = `${stack.region}${subnetConfig.availabilityZone.toLowerCase()}`
 
     const subnet = new ec2.PublicSubnet(stack, `${subnetTypes.PUBLIC}Subnet${subnetConfig.availabilityZone}`, {
-      availabilityZone: az,
-      cidrBlock: subnetConfig.ipAddress,
-      vpcId: vpcid,
-      mapPublicIpOnLaunch: subnetConfig.mapPublicIpOnLaunch || false
+        availabilityZone: az,
+        cidrBlock: subnetConfig.ipAddress,
+        vpcId: vpcid,
+        mapPublicIpOnLaunch: subnetConfig.mapPublicIpOnLaunch || false
     })
     Tags.of(subnet).add('aws-cdk:subnet-type', ec2.SubnetType.PUBLIC)
     subnet.node.tryRemoveChild('RouteTableAssociation')
     subnet.node.tryRemoveChild('RouteTable')
     const eip = new ec2.CfnEIP(stack, `NATGatewayEIP${subnetConfig.availabilityZone.toLowerCase()}`, {
-      domain: "vpc"
+        domain: "vpc"
     })
 
     new ec2.CfnSubnetRouteTableAssociation(stack, `RouteAssociationPublic${az}Default`, {
-      routeTableId: publicRouteTable.ref,
-      subnetId: subnet.subnetId
+        routeTableId: publicRouteTable.ref,
+        subnetId: subnet.subnetId
     })
 
     const natGateway = new ec2.CfnNatGateway(stack, `NatGateway${subnetConfig.availabilityZone.toLowerCase()}`, {
-      subnetId: subnet.subnetId,
-      allocationId: eip.attrAllocationId,
-      tags: [{
-        key: 'Name',
-        value: `NatGateway-${vpcName.toUpperCase()}-${subnetConfig.availabilityZone.toLowerCase()}`,
-      }],
+        subnetId: subnet.subnetId,
+        allocationId: eip.attrAllocationId,
+        tags: [{
+            key: 'Name',
+            value: `NatGateway-${vpcName.toUpperCase()}-${subnetConfig.availabilityZone.toLowerCase()}`,
+        }],
 
     })
 
     nacls.associateWithSubnet(`PUBLIC_NACL-${subnetConfig.availabilityZone.toLowerCase()}`, {
-      subnets: [subnet]
+        subnets: [subnet]
     })
     listNATGateway.set(subnetConfig.availabilityZone.toLowerCase(), natGateway)
 
     return subnet
-  }
+}
 
 /**
    * 

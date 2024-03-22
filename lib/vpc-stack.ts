@@ -1,9 +1,7 @@
 import { Stack, StackProps, Tags } from 'aws-cdk-lib'
 import * as ec2 from 'aws-cdk-lib/aws-ec2'
 import { Construct } from 'constructs'
-
 import { VpcConfig, naclRule, createNACLs, createPublicSubnet, createPrivateSubnet, createDataSubnet } from './utils';
-
 
 /**
  * Create vpc with 3 subnets: public, private, and data
