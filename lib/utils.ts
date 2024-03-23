@@ -112,6 +112,30 @@ export const createAclTraffic = (protocol: string, startPort?: number, endPort?:
     }
 }
 
+// export const createPublicSubnets = (stack: Stack, vpcid: string, vpcConfig: VpcConfig, publicRouteTable: ec2.CfnRouteTable, listNATGateway: Map<string, ec2.CfnNatGateway>, nacls: ec2.NetworkAcl) => {
+//     vpcConfig.publicSubnets.forEach((subnetConfig) => {
+//         createPublicSubnet(stack, vpcid, vpcConfig, subnetConfig, publicRouteTable, listNATGateway, nacls)
+//       })
+// }
+
+const createNatGateway = (stack: Stack, vpcConfig: VpcConfig, subnet: ec2.PublicSubnet, subnetConfig: SubnetConfig, listNATGateway: Map<string, ec2.CfnNatGateway>): ec2.CfnNatGateway => {
+    const eip = new ec2.CfnEIP(stack, `NATGatewayEIP${subnetConfig.availabilityZone.toLowerCase()}`, {
+        domain: "vpc"
+    })
+
+    const natGateway = new ec2.CfnNatGateway(stack, `NatGateway${subnetConfig.availabilityZone.toLowerCase()}`, {
+        subnetId: subnet.subnetId,
+        allocationId: eip.attrAllocationId,
+        tags: [{
+            key: 'Name',
+            value: `NatGateway-${vpcConfig.vpcName.toUpperCase()}-${subnetConfig.availabilityZone.toLowerCase()}`,
+        }],
+
+    })    
+    listNATGateway.set(subnetConfig.availabilityZone.toLowerCase(), natGateway)
+    return natGateway
+}   
+
 /**
  * 
  * @param stack 
@@ -121,7 +145,7 @@ export const createAclTraffic = (protocol: string, startPort?: number, endPort?:
  * @param publicRouteTable 
  * @returns 
  */
-export const createPublicSubnet = (stack: Stack, vpcid: string, vpcName: string, subnetConfig: SubnetConfig, publicRouteTable: ec2.CfnRouteTable, listNATGateway: Map<string, ec2.CfnNatGateway>, nacls: ec2.NetworkAcl): ec2.Subnet => {
+export const createPublicSubnet = (stack: Stack, vpcid: string, vpcConfig: VpcConfig, subnetConfig: SubnetConfig, publicRouteTable: ec2.CfnRouteTable, listNATGateway: Map<string, ec2.CfnNatGateway>, nacls: ec2.NetworkAcl): ec2.Subnet => {
     const az = `${stack.region}${subnetConfig.availabilityZone.toLowerCase()}`
 
     const subnet = new ec2.PublicSubnet(stack, `${subnetTypes.PUBLIC}Subnet${subnetConfig.availabilityZone}`, {
@@ -133,29 +157,36 @@ export const createPublicSubnet = (stack: Stack, vpcid: string, vpcName: string,
     Tags.of(subnet).add('aws-cdk:subnet-type', ec2.SubnetType.PUBLIC)
     subnet.node.tryRemoveChild('RouteTableAssociation')
     subnet.node.tryRemoveChild('RouteTable')
-    const eip = new ec2.CfnEIP(stack, `NATGatewayEIP${subnetConfig.availabilityZone.toLowerCase()}`, {
-        domain: "vpc"
-    })
 
     new ec2.CfnSubnetRouteTableAssociation(stack, `RouteAssociationPublic${az}Default`, {
         routeTableId: publicRouteTable.ref,
         subnetId: subnet.subnetId
     })
 
-    const natGateway = new ec2.CfnNatGateway(stack, `NatGateway${subnetConfig.availabilityZone.toLowerCase()}`, {
-        subnetId: subnet.subnetId,
-        allocationId: eip.attrAllocationId,
-        tags: [{
-            key: 'Name',
-            value: `NatGateway-${vpcName.toUpperCase()}-${subnetConfig.availabilityZone.toLowerCase()}`,
-        }],
+    if (vpcConfig.enable_per_az_nat_gateway || listNATGateway.size < 1) {
 
-    })
+        createNatGateway(stack, vpcConfig, subnet, subnetConfig, listNATGateway)
+
+        // const eip = new ec2.CfnEIP(stack, `NATGatewayEIP${subnetConfig.availabilityZone.toLowerCase()}`, {
+        //     domain: "vpc"
+        // })    
+        // const natGateway = new ec2.CfnNatGateway(stack, `NatGateway${subnetConfig.availabilityZone.toLowerCase()}`, {
+        //     subnetId: subnet.subnetId,
+        //     allocationId: eip.attrAllocationId,
+        //     tags: [{
+        //         key: 'Name',
+        //         value: `NatGateway-${vpcConfig.vpcName.toUpperCase()}-${subnetConfig.availabilityZone.toLowerCase()}`,
+        //     }],
+    
+        // })    
+        // listNATGateway.set(subnetConfig.availabilityZone.toLowerCase(), natGateway)
+    
+    } 
 
     nacls.associateWithSubnet(`PUBLIC_NACL-${subnetConfig.availabilityZone.toLowerCase()}`, {
         subnets: [subnet]
     })
-    listNATGateway.set(subnetConfig.availabilityZone.toLowerCase(), natGateway)
+
 
     return subnet
 }
@@ -183,13 +214,20 @@ export const createPrivateSubnet = (stack: Stack, vpcid: string, vpcName: string
     const privateRouteTable = new ec2.CfnRouteTable(stack, `privateSubnetRouteTable${subnetConfig.availabilityZone.toLowerCase()}`, {
         vpcId: vpcid
     })
+    let natGateWayId: string
     if (listNATGateway.has(subnetConfig.availabilityZone.toLowerCase())) {
-        new ec2.CfnRoute(stack, `PrivateRoute${subnetConfig.availabilityZone.toLowerCase()}`, {
-            routeTableId: privateRouteTable.ref,
-            natGatewayId: listNATGateway.get(subnetConfig.availabilityZone.toLowerCase())?.ref,
-            destinationCidrBlock: '0.0.0.0/0'
-        })
+        natGateWayId = listNATGateway.get(subnetConfig.availabilityZone.toLowerCase())?.ref || 'none'
+    } else {
+        const firstElement = listNATGateway.entries().next().value
+        natGateWayId = firstElement[1]?.ref || 'none'
     }
+
+    new ec2.CfnRoute(stack, `PrivateRoute${subnetConfig.availabilityZone.toLowerCase()}`, {
+        routeTableId: privateRouteTable.ref,
+        natGatewayId: natGateWayId,
+        destinationCidrBlock: '0.0.0.0/0'
+    })
+
     Tags.of(privateRouteTable).add("Name", `RT-${vpcName}-PRIVATE-${subnetConfig.availabilityZone.toLowerCase()}`)
 
     new ec2.CfnSubnetRouteTableAssociation(stack, `RouteAssociationPrivate${subnetConfig.availabilityZone.toLowerCase()}Default`, {

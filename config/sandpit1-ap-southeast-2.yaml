@@ -1,6 +1,6 @@
 vpcName: 'test'
 ipAddresses: '10.0.0.0/16'
-enable_per_az_nat_gateway: true #If true it will deploy 1 nat gateway for every public subnet
+enable_per_az_nat_gateway: false #If true it will deploy 1 nat gateway for every public subnet
 publicSubnets:
   - availabilityZone: 'a'
     ipAddress: '10.0.1.0/24'

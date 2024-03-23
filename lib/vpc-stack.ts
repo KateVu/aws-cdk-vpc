@@ -216,7 +216,7 @@ export class VPCStack extends Stack {
 
     //Create vpc
     const vpc = new ec2.Vpc(this, 'VPC-Kate', {
-      ipAddresses: ec2.IpAddresses.cidr('10.0.0.0/16'),
+      ipAddresses: ec2.IpAddresses.cidr(vpcConfig.ipAddresses),
       subnetConfiguration: []
     })
 
@@ -267,7 +267,7 @@ export class VPCStack extends Stack {
     //waitNATGateways is for handling race condition
     const waitNATGateways = (): boolean => {
       vpcConfig.publicSubnets.forEach((subnetConfig) => {
-        createPublicSubnet(this, vpc.vpcId, vpcConfig.vpcName, subnetConfig, publicRouteTable, listNATGateway, publicNetworkNalcs)
+        createPublicSubnet(this, vpc.vpcId, vpcConfig, subnetConfig, publicRouteTable, listNATGateway, publicNetworkNalcs)
       })
       return true
     }
