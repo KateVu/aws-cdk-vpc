@@ -1,7 +1,14 @@
 import { Stack, StackProps, Tags } from 'aws-cdk-lib'
 import * as ec2 from 'aws-cdk-lib/aws-ec2'
 import { Construct } from 'constructs'
-import { VpcConfig, naclRule, createNACLs, createPublicSubnet, createPrivateSubnet, createDataSubnet } from './utils';
+import { VpcConfig, naclRule, createNACLs, createPublicSubnet, createPrivateSubnet, createDataSubnet, getVPCConfig } from './utils';
+
+interface VpcStackPros extends StackProps {
+  region: string,
+  accountId: string, 
+  accountName: string,
+  configFolder: string
+}
 
 /**
  * Create vpc with 3 subnets: public, private, and data
@@ -11,59 +18,21 @@ import { VpcConfig, naclRule, createNACLs, createPublicSubnet, createPrivateSubn
  * Tag resource with list of tag
  */
 export class VPCStack extends Stack {
-  constructor(scope: Construct, id: string, props?: StackProps) {
-    super(scope, id, props);
+  constructor(scope: Construct, id: string, props: VpcStackPros) {
+    const updatedProps = {
+      env: {
+        region: props.region,
+        account: props.accountId,
+      },
+      ...props
+    }  
+    super(scope, id, updatedProps)
 
-    const vpcConfig: VpcConfig = {
-      vpcName: 'VPC-Kate',
-      ipAddresses: '10.0.0.0/16',
+    const {region, accountName, accountId, configFolder} = props
+    //Get fileConfigName: 
+    const configFileName = `${accountName}-${region}.yaml`
+    const vpcConfig = getVPCConfig(configFolder, configFileName)
 
-      publicSubnets: [
-        {
-          availabilityZone: 'a',
-          ipAddress: '10.0.1.0/24',
-          mapPublicIpOnLaunch: true
-        },
-        {
-          availabilityZone: 'b',
-          ipAddress: '10.0.4.0/24',
-          mapPublicIpOnLaunch: true
-        },
-        {
-          availabilityZone: 'c',
-          ipAddress: '10.0.7.0/24',
-          mapPublicIpOnLaunch: true
-        },
-      ],
-      privateSubnets: [
-        {
-          availabilityZone: 'a',
-          ipAddress: '10.0.2.0/24',
-        },
-        {
-          availabilityZone: 'b',
-          ipAddress: '10.0.5.0/24',
-        },
-        {
-          availabilityZone: 'c',
-          ipAddress: '10.0.8.0/24',
-        }
-      ],
-      dataSubnets: [
-        {
-          availabilityZone: 'a',
-          ipAddress: '10.0.3.0/24',
-        },
-        {
-          availabilityZone: 'b',
-          ipAddress: '10.0.6.0/24',
-        },
-        {
-          availabilityZone: 'c',
-          ipAddress: '10.0.9.0/24',
-        }
-      ]
-    }
 
     const publicSubnetNACLs: naclRule[] = [
       {

@@ -4,6 +4,10 @@ import * as fs from 'fs'
 import * as path from 'path'
 import * as yaml from 'js-yaml'
 
+export interface AWSAccount {
+    name: string,
+    account_id: string
+}
 export enum subnetTypes {
     PUBLIC = "Public",
     PRIVATE = "Private",
@@ -17,7 +21,8 @@ export interface SubnetConfig {
 
 export interface VpcConfig {
     vpcName: string,
-    ipAddresses: string
+    ipAddresses: string,
+    enable_per_az_nat_gateway: boolean,    
     publicSubnets: SubnetConfig[],
     privateSubnets: SubnetConfig[],
     dataSubnets: SubnetConfig[]
@@ -35,19 +40,19 @@ export interface naclRule {
     direction: string
 }
 
-export interface AWSAccount {
-    name: string,
-    account_id: string
+export const getFullFilePath = (filePath: string, fileName: string): string => {
+    const fullFilePath = path.join(__dirname, filePath) + fileName
+    return fullFilePath
 }
 
 const getAccountIds = (filePath: string, fileName: string): AWSAccount[] => {
     try {
-        const fileContents = fs.readFileSync(path.join(__dirname, filePath) + fileName, 'utf8')
+        const fileContents = fs.readFileSync(getFullFilePath(filePath, fileName), 'utf8')
         const data = yaml.load(fileContents) as AWSAccount[]
         return data
     } catch (e) {
         console.log(e)
-        throw new Error('readYamlFile: Cannot read file')
+        throw new Error('getAccountIds: Cannot read file')
     }
 }
 
@@ -61,6 +66,18 @@ export const getAccountId = (accountName: string, filePath: string, fileName: st
     }
     return found.account_id
 }
+
+export const getVPCConfig = (filePath: string, fileName: string): VpcConfig => {
+    try {
+        const fileContents = fs.readFileSync(getFullFilePath(filePath, fileName), 'utf8')
+        const data = yaml.load(fileContents) as VpcConfig
+        return data
+    } catch (e) {
+        console.log(e)
+        throw new Error('getVPCConfig: Cannot read file')
+    }
+}
+
 
 
 /**

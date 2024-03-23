@@ -1,0 +1,39 @@
+vpcName: 'test'
+ipAddresses: '10.0.0.0/16'
+enable_per_az_nat_gateway: true #If true it will deploy 1 nat gateway for every public subnet
+publicSubnets:
+  - availabilityZone: 'a'
+    ipAddress: '10.0.1.0/24'
+    mapPublicIpOnLaunch: true
+  - availabilityZone: 'b'
+    ipAddress: '10.0.4.0/24'
+    mapPublicIpOnLaunch: true
+  - availabilityZone: 'c'
+    ipAddress: '10.0.7.0/24'
+    mapPublicIpOnLaunch: true
+privateSubnets:
+  - availabilityZone: 'a'
+    ipAddress: '10.0.2.0/24'
+  - availabilityZone: 'b'
+    ipAddress: '10.0.5.0/24'
+  - availabilityZone: 'c'
+    ipAddress: '10.0.8.0/24'
+dataSubnets:
+  - availabilityZone: 'a'
+    ipAddress: '10.0.3.0/24'
+  - availabilityZone: 'b'
+    ipAddress: '10.0.6.0/24'
+  - availabilityZone: 'c'
+    ipAddress: '10.0.9.0/24'
+
+#NACL rules    
+publicNaclrules:
+  - ruleNumber:
+    ruleAction:
+    isIpV4Block:
+    cidrBlock:
+    protocol:
+    startPort:
+    endPort:
+    icmp:
+    direction:
