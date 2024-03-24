@@ -15,9 +15,9 @@ Add a file name aws_account.yaml in config folder and add your account name and 
   account_id: 'your aws account id - please leave the quote here so we do not face type error'
 ```   
 - Create vpc config file for target account and region you want to deploy
-  - syntax for file name: <aws_account_name>-<region>.yaml, create/update file and put it in config folder
-  - Example can be find in sandpit1-ap-southeast-2.yaml
-    - 
+  - syntax for file name: `<aws_account_name>-<region>.yaml`, create/update file and put it in config folder
+  - Example can be find in sandpit1-ap-southeast-2.yaml (https://github.com/KateVu/aws-cdk-vpc/blob/main/config/sandpit1-ap-southeast-2.yaml)
+    If you only want to deploy 1 nategate way for the vpc for cost saving, set `enable_per_az_nat_gateway = false` (https://github.com/KateVu/aws-cdk-vpc/blob/main/config/sandpit1-ap-southeast-2.yaml#L3)
 
 ### How to deploy
 - Obtain aws credential for the aws account (check ~/.aws/credential or ~/.aws/cli/cache)
