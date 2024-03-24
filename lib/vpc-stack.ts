@@ -1,11 +1,11 @@
 import { Stack, StackProps, Tags } from 'aws-cdk-lib'
 import * as ec2 from 'aws-cdk-lib/aws-ec2'
 import { Construct } from 'constructs'
-import { VpcConfig, naclRule, createNACLs, createPublicSubnet, createPrivateSubnet, createDataSubnet, getVPCConfig } from './utils';
+import { NaclRule, createNACLs, createPublicSubnet, createPrivateSubnet, createDataSubnet, getVPCConfig } from './utils';
 
 interface VpcStackPros extends StackProps {
   region: string,
-  accountId: string, 
+  accountId: string,
   accountName: string,
   configFolder: string
 }
@@ -25,194 +25,13 @@ export class VPCStack extends Stack {
         account: props.accountId,
       },
       ...props
-    }  
+    }
     super(scope, id, updatedProps)
 
-    const {region, accountName, accountId, configFolder} = props
+    const { region, accountName, accountId, configFolder } = props
     //Get fileConfigName: 
     const configFileName = `${accountName}-${region}.yaml`
     const vpcConfig = getVPCConfig(configFolder, configFileName)
-
-
-    const publicSubnetNACLs: naclRule[] = [
-      {
-        ruleNumber: 651,
-        ruleAction: "allow",
-        cidrBlock: vpcConfig.ipAddresses, //Allow all vpc traffic
-        protocol: "-1",
-        isIpV4Block: true,
-        direction: "ingress"
-      },
-      {
-        ruleNumber: 1950,
-        ruleAction: "allow",
-        cidrBlock: "0.0.0.0/0", //Allow all http traffic
-        protocol: "6",
-        startPort: 80,
-        endPort: 80,
-        isIpV4Block: true,
-        direction: "ingress"
-      },
-      {
-        ruleNumber: 1951,
-        ruleAction: "allow",
-        cidrBlock: "0.0.0.0/0", //Allow all https traffic
-        protocol: "6",
-        startPort: 443,
-        endPort: 443,
-        isIpV4Block: true,
-        direction: "ingress"
-      },
-      {
-        ruleNumber: 2051,
-        ruleAction: "allow",
-        cidrBlock: "0.0.0.0/0", //Allow all ephemeral_tcp
-        protocol: "6",
-        startPort: 1024,
-        endPort: 65535,
-        isIpV4Block: true,
-        direction: "ingress"
-      },
-      {
-        ruleNumber: 2052,
-        ruleAction: "allow",
-        cidrBlock: "0.0.0.0/0", //Allow all ephemeral_upd
-        protocol: "17",
-        startPort: 1024,
-        endPort: 65535,
-        isIpV4Block: true,
-        direction: "ingress"
-      },
-      //Egress
-      {
-        ruleNumber: 651,
-        ruleAction: "allow",
-        cidrBlock: vpcConfig.ipAddresses, //Allow all vpc traffic
-        protocol: "-1",
-        isIpV4Block: true,
-        direction: "egress"
-      },
-      {
-        ruleNumber: 1950,
-        ruleAction: "allow",
-        cidrBlock: "0.0.0.0/0", //Allow all http traffic
-        protocol: "6",
-        startPort: 80,
-        endPort: 80,
-        isIpV4Block: true,
-        direction: "egress"
-      },
-      {
-        ruleNumber: 1951,
-        ruleAction: "allow",
-        cidrBlock: "0.0.0.0/0", //Allow all https traffic
-        protocol: "6",
-        startPort: 443,
-        endPort: 443,
-        isIpV4Block: true,
-        direction: "egress"
-      },
-      {
-        ruleNumber: 2051,
-        ruleAction: "allow",
-        cidrBlock: "0.0.0.0/0", //Allow all ephemeral_tcp
-        protocol: "6",
-        startPort: 1024,
-        endPort: 65535,
-        isIpV4Block: true,
-        direction: "egress"
-      },
-      {
-        ruleNumber: 2052,
-        ruleAction: "allow",
-        cidrBlock: "0.0.0.0/0", //Allow all ephemeral_upd
-        protocol: "17",
-        startPort: 1024,
-        endPort: 65535,
-        isIpV4Block: true,
-        direction: "egress"
-      },
-    ]
-
-    const privateSubnetNACLs: naclRule[] = [
-      {
-        ruleNumber: 651,
-        ruleAction: "allow",
-        cidrBlock: vpcConfig.ipAddresses, //Allow all vpc traffic
-        protocol: "-1",
-        isIpV4Block: true,
-        direction: "ingress"
-      },
-      {
-        ruleNumber: 2051,
-        ruleAction: "allow",
-        cidrBlock: "0.0.0.0/0", //Allow all ephemeral_tcp
-        protocol: "6",
-        startPort: 1024,
-        endPort: 65535,
-        isIpV4Block: true,
-        direction: "ingress"
-      },
-      {
-        ruleNumber: 2052,
-        ruleAction: "allow",
-        cidrBlock: "0.0.0.0/0", //Allow all ephemeral_upd
-        protocol: "17",
-        startPort: 1024,
-        endPort: 65535,
-        isIpV4Block: true,
-        direction: "ingress"
-      },
-      //Egress
-      {
-        ruleNumber: 651,
-        ruleAction: "allow",
-        cidrBlock: vpcConfig.ipAddresses, //Allow all vpc traffic
-        protocol: "-1",
-        isIpV4Block: true,
-        direction: "egress"
-      },
-      {
-        ruleNumber: 1950,
-        ruleAction: "allow",
-        cidrBlock: "0.0.0.0/0", //Allow all http traffic
-        protocol: "6",
-        startPort: 80,
-        endPort: 80,
-        isIpV4Block: true,
-        direction: "egress"
-      },
-      {
-        ruleNumber: 1951,
-        ruleAction: "allow",
-        cidrBlock: "0.0.0.0/0", //Allow all https traffic
-        protocol: "6",
-        startPort: 443,
-        endPort: 443,
-        isIpV4Block: true,
-        direction: "egress"
-      },
-    ]
-
-    const dataSubnetNACLs: naclRule[] = [
-      {
-        ruleNumber: 651,
-        ruleAction: "allow",
-        cidrBlock: vpcConfig.ipAddresses, //Allow all vpc traffic
-        protocol: "-1",
-        isIpV4Block: true,
-        direction: "ingress"
-      },
-      //Egress
-      {
-        ruleNumber: 651,
-        ruleAction: "allow",
-        cidrBlock: vpcConfig.ipAddresses, //Allow all vpc traffic
-        protocol: "-1",
-        isIpV4Block: true,
-        direction: "egress"
-      },
-    ]
 
     //Create vpc
     const vpc = new ec2.Vpc(this, 'VPC-Kate', {
@@ -233,11 +52,11 @@ export class VPCStack extends Stack {
     })
 
     //Create public nacls
-    const publicNetworkNalcs = createNACLs(this, `ACL-Public-${vpcConfig.vpcName}`, vpc, publicSubnetNACLs)
+    const publicNetworkNalcs = createNACLs(this, `ACL-Public-${vpcConfig.vpcName}`, vpc, vpcConfig.publicSubnetNACLs)
     //Create private nacls
-    const privateNetworkNalcs = createNACLs(this, `ACL-Private-${vpcConfig.vpcName}`, vpc, privateSubnetNACLs)
+    const privateNetworkNalcs = createNACLs(this, `ACL-Private-${vpcConfig.vpcName}`, vpc, vpcConfig.privateSubnetNACLs)
     //Create public nacls
-    const dataNetworkNalcs = createNACLs(this, `ACL-Data-${vpcConfig.vpcName}`, vpc, dataSubnetNACLs)
+    const dataNetworkNalcs = createNACLs(this, `ACL-Data-${vpcConfig.vpcName}`, vpc, vpcConfig.dataSubnetNACLs)
 
 
     //Create public route table
@@ -283,5 +102,5 @@ export class VPCStack extends Stack {
     vpcConfig.dataSubnets.forEach((subnetConfig) => {
       createDataSubnet(this, vpc.vpcId, vpcConfig.vpcName, subnetConfig, dataRouteTable, dataNetworkNalcs)
     })
-  }  
+  }
 }

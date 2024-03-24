@@ -18,17 +18,7 @@ export interface SubnetConfig {
     ipAddress: string,
     mapPublicIpOnLaunch?: boolean
 }
-
-export interface VpcConfig {
-    vpcName: string,
-    ipAddresses: string,
-    enable_per_az_nat_gateway: boolean,    
-    publicSubnets: SubnetConfig[],
-    privateSubnets: SubnetConfig[],
-    dataSubnets: SubnetConfig[]
-}
-
-export interface naclRule {
+export interface NaclRule {
     ruleNumber: number,
     ruleAction: string,
     isIpV4Block: boolean,
@@ -39,6 +29,19 @@ export interface naclRule {
     icmp?: ec2.AclIcmp,
     direction: string
 }
+
+export interface VpcConfig {
+    vpcName: string,
+    ipAddresses: string,
+    enable_per_az_nat_gateway: boolean,
+    publicSubnets: SubnetConfig[],
+    privateSubnets: SubnetConfig[],
+    dataSubnets: SubnetConfig[],
+    publicSubnetNACLs: NaclRule[],
+    privateSubnetNACLs: NaclRule[],
+    dataSubnetNACLs: NaclRule[]
+}
+
 
 export const getFullFilePath = (filePath: string, fileName: string): string => {
     const fullFilePath = path.join(__dirname, filePath) + fileName
@@ -131,10 +134,10 @@ const createNatGateway = (stack: Stack, vpcConfig: VpcConfig, subnet: ec2.Public
             value: `NatGateway-${vpcConfig.vpcName.toUpperCase()}-${subnetConfig.availabilityZone.toLowerCase()}`,
         }],
 
-    })    
+    })
     listNATGateway.set(subnetConfig.availabilityZone.toLowerCase(), natGateway)
     return natGateway
-}   
+}
 
 /**
  * 
@@ -177,11 +180,11 @@ export const createPublicSubnet = (stack: Stack, vpcid: string, vpcConfig: VpcCo
         //         key: 'Name',
         //         value: `NatGateway-${vpcConfig.vpcName.toUpperCase()}-${subnetConfig.availabilityZone.toLowerCase()}`,
         //     }],
-    
+
         // })    
         // listNATGateway.set(subnetConfig.availabilityZone.toLowerCase(), natGateway)
-    
-    } 
+
+    }
 
     nacls.associateWithSubnet(`PUBLIC_NACL-${subnetConfig.availabilityZone.toLowerCase()}`, {
         subnets: [subnet]
@@ -264,7 +267,7 @@ export const createDataSubnet = (stack: Stack, vpcid: string, vpcName: string, s
     return subnet
 }
 
-export const createNACLs = (stack: Stack, name: string, vpc: ec2.Vpc, rules: naclRule[]): ec2.NetworkAcl => {
+export const createNACLs = (stack: Stack, name: string, vpc: ec2.Vpc, rules: NaclRule[]): ec2.NetworkAcl => {
     const networkAcl = new ec2.NetworkAcl(stack, name, {
         vpc: vpc,
         networkAclName: name,
