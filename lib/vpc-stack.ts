@@ -1,12 +1,13 @@
 import { Stack, StackProps, Tags } from 'aws-cdk-lib'
 import * as ec2 from 'aws-cdk-lib/aws-ec2'
 import { Construct } from 'constructs'
-import { NaclRule, createNACLs, createPublicSubnet, createPrivateSubnet, createDataSubnet, getVPCConfig } from './utils';
+import { createNACLs, createPublicSubnet, createPrivateSubnet, createDataSubnet, getVPCConfig } from './utils';
 
 interface VpcStackPros extends StackProps {
   region: string,
   accountId: string,
   accountName: string,
+  envName: string,
   configFolder: string
 }
 
@@ -28,13 +29,13 @@ export class VPCStack extends Stack {
     }
     super(scope, id, updatedProps)
 
-    const { region, accountName, accountId, configFolder } = props
+    const { region, accountName, configFolder } = props
     //Get fileConfigName: 
     const configFileName = `${accountName}-${region}.yaml`
     const vpcConfig = getVPCConfig(configFolder, configFileName)
 
     //Create vpc
-    const vpc = new ec2.Vpc(this, 'VPC-Kate', {
+    const vpc = new ec2.Vpc(this, 'vpc', {
       ipAddresses: ec2.IpAddresses.cidr(vpcConfig.ipAddresses),
       subnetConfiguration: []
     })
@@ -60,12 +61,12 @@ export class VPCStack extends Stack {
 
 
     //Create public route table
-    const publicRouteTable = new ec2.CfnRouteTable(this, 'PublicSubnetRouteTable', {
+    const publicRouteTable = new ec2.CfnRouteTable(this, `PublicSubnetRouteTable`, {
       vpcId: vpc.vpcId
     })
 
     //and add route to iwg for PublicRoute table
-    new ec2.CfnRoute(this, 'PublicRoute', {
+    new ec2.CfnRoute(this, `PublicRoute`, {
       routeTableId: publicRouteTable.ref,
       gatewayId: igw.ref,
       destinationCidrBlock: '0.0.0.0/0'
@@ -74,7 +75,7 @@ export class VPCStack extends Stack {
 
     //Create data route table
     //Private route tables will be created in createPublicSubnet function since they need a route to nat gateways, and nat gateways will be created when created public subnets
-    const dataRouteTable = new ec2.CfnRouteTable(this, 'dataSubnetRouteTable', {
+    const dataRouteTable = new ec2.CfnRouteTable(this, `dataSubnetRouteTable`, {
       vpcId: vpc.vpcId
     })
     Tags.of(dataRouteTable).add("Name", `RT-${vpcConfig.vpcName}-DATA`)

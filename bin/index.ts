@@ -18,9 +18,10 @@ const accountId = getAccountId(accountName, configFolder, accountFileName)
 const app = new cdk.App();
 const vpcStack = new VPCStack(app, 'VpcStack', {
   stackName: `vpc-${envName}`,
-  region: region, 
+  region: region,
   accountId: accountId,
   accountName: accountName,
+  envName: envName,
   configFolder: configFolder
 });
 

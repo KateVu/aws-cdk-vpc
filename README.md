@@ -7,15 +7,17 @@ This module deploys a 3-tier VPC. The following resources are managed:
 - Internet Gateway
 - NAT Gateways
 ## Getting started
-### Check your config files in config folder:
-- aws_account.yaml: map aws account name with aws account id.
+### Update mapping for account name and aws account id:
+- If there is no aws_account.yaml file in config folder, create new one, example can be found in aws_account-template.yaml file.
 Add a file name aws_account.yaml in config folder and add your account name and id
 ```
 - name: sandpit1
   account_id: 'your aws account id - please leave the quote here so we do not face type error'
 ```   
-If you want to deploy to new aws account just add more item in the list
-- `<aws_account_name>-<region>.yaml`: add vpc config file for your aws account with name systax like this. If you have more account acc, add another file for it. 
+- Create vpc config file for target account and region you want to deploy
+  - syntax for file name: <aws_account_name>-<region>.yaml, create/update file and put it in config folder
+  - Example can be find in sandpit1-ap-southeast-2.yaml
+    - 
 
 ### How to deploy
 - Obtain aws credential for the aws account (check ~/.aws/credential or ~/.aws/cli/cache)
