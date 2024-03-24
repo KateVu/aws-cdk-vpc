@@ -115,12 +115,6 @@ export const createAclTraffic = (protocol: string, startPort?: number, endPort?:
     }
 }
 
-// export const createPublicSubnets = (stack: Stack, vpcid: string, vpcConfig: VpcConfig, publicRouteTable: ec2.CfnRouteTable, listNATGateway: Map<string, ec2.CfnNatGateway>, nacls: ec2.NetworkAcl) => {
-//     vpcConfig.publicSubnets.forEach((subnetConfig) => {
-//         createPublicSubnet(stack, vpcid, vpcConfig, subnetConfig, publicRouteTable, listNATGateway, nacls)
-//       })
-// }
-
 const createNatGateway = (stack: Stack, vpcConfig: VpcConfig, subnet: ec2.PublicSubnet, subnetConfig: SubnetConfig, listNATGateway: Map<string, ec2.CfnNatGateway>): ec2.CfnNatGateway => {
     const eip = new ec2.CfnEIP(stack, `NATGatewayEIP${subnetConfig.availabilityZone.toLowerCase()}`, {
         domain: "vpc"
@@ -158,6 +152,7 @@ export const createPublicSubnet = (stack: Stack, vpcid: string, vpcConfig: VpcCo
         mapPublicIpOnLaunch: subnetConfig.mapPublicIpOnLaunch || false
     })
     Tags.of(subnet).add('aws-cdk:subnet-type', ec2.SubnetType.PUBLIC)
+    Tags.of(subnet).add('Name', `${vpcConfig.vpcName}-${subnetTypes.PUBLIC}Subnet${subnetConfig.availabilityZone}`)
     subnet.node.tryRemoveChild('RouteTableAssociation')
     subnet.node.tryRemoveChild('RouteTable')
 
@@ -167,29 +162,12 @@ export const createPublicSubnet = (stack: Stack, vpcid: string, vpcConfig: VpcCo
     })
 
     if (vpcConfig.enable_per_az_nat_gateway || listNATGateway.size < 1) {
-
         createNatGateway(stack, vpcConfig, subnet, subnetConfig, listNATGateway)
-
-        // const eip = new ec2.CfnEIP(stack, `NATGatewayEIP${subnetConfig.availabilityZone.toLowerCase()}`, {
-        //     domain: "vpc"
-        // })    
-        // const natGateway = new ec2.CfnNatGateway(stack, `NatGateway${subnetConfig.availabilityZone.toLowerCase()}`, {
-        //     subnetId: subnet.subnetId,
-        //     allocationId: eip.attrAllocationId,
-        //     tags: [{
-        //         key: 'Name',
-        //         value: `NatGateway-${vpcConfig.vpcName.toUpperCase()}-${subnetConfig.availabilityZone.toLowerCase()}`,
-        //     }],
-
-        // })    
-        // listNATGateway.set(subnetConfig.availabilityZone.toLowerCase(), natGateway)
-
     }
 
     nacls.associateWithSubnet(`PUBLIC_NACL-${subnetConfig.availabilityZone.toLowerCase()}`, {
         subnets: [subnet]
     })
-
 
     return subnet
 }
@@ -213,6 +191,7 @@ export const createPrivateSubnet = (stack: Stack, vpcid: string, vpcName: string
     subnet.node.tryRemoveChild('RouteTableAssociation')
     subnet.node.tryRemoveChild('RouteTable')
     Tags.of(subnet).add('aws-cdk:subnet-type', ec2.SubnetType.PRIVATE_WITH_EGRESS)
+    Tags.of(subnet).add('Name', `${vpcName}-${subnetTypes.PRIVATE}Subnet${subnetConfig.availabilityZone}`)
 
     const privateRouteTable = new ec2.CfnRouteTable(stack, `privateSubnetRouteTable${subnetConfig.availabilityZone.toLowerCase()}`, {
         vpcId: vpcid
@@ -255,6 +234,7 @@ export const createDataSubnet = (stack: Stack, vpcid: string, vpcName: string, s
     subnet.node.tryRemoveChild('RouteTableAssociation')
     subnet.node.tryRemoveChild('RouteTable')
     Tags.of(subnet).add('aws-cdk:subnet-type', ec2.SubnetType.PRIVATE_ISOLATED)
+    Tags.of(subnet).add('Name', `${vpcName}-${subnetTypes.DATA}Subnet${subnetConfig.availabilityZone}`)
 
     new ec2.CfnSubnetRouteTableAssociation(stack, `RouteAssociationData${az}Default`, {
         routeTableId: dataRouteTable.ref,
