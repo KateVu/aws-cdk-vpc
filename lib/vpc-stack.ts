@@ -38,7 +38,9 @@ export class VPCStack extends Stack {
     const vpc = new ec2.Vpc(this, 'vpc', {
       ipAddresses: ec2.IpAddresses.cidr(vpcConfig.ipAddresses),
       subnetConfiguration: [],
-      vpcName: vpcConfig.vpcName
+      vpcName: vpcConfig.vpcName,
+      enableDnsHostnames: true,
+      enableDnsSupport: true      
     })
 
     //Create iwg and attached to the vpc
