@@ -162,10 +162,27 @@ dataSubnetNACLs:
     protocol: "-1"
     isIpV4Block: true
     direction: "ingress"
+  - ruleNumber: 1950
+    ruleAction: "allow"
+    cidrBlock: "0.0.0.0/0" #Allow all vpc traffic
+    startPort: 1024
+    endPort: 65535    
+    protocol: "6"
+    isIpV4Block: true
+    direction: "ingress"
+
   #Egress
   - ruleNumber: 651
     ruleAction: "allow"
     cidrBlock: "10.0.0.0/16" #Allow all vpc traffic
     protocol: "-1"
+    isIpV4Block: true
+    direction: "egress"
+  - ruleNumber: 1951
+    ruleAction: "allow"
+    cidrBlock: "0.0.0.0/0" #Allow https - if we use vpc endpoint gateway
+    protocol: "6"
+    startPort: 443
+    endPort: 443
     isIpV4Block: true
     direction: "egress"
