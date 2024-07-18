@@ -28,14 +28,14 @@ jobs:
     env:
       ENVIRONMENT_NAME: ${{ needs.get_branch_name.outputs.branch }}
       ACCOUNT_NAME: 'sandpit1'
-      aws_account_id: ${{ vars.AWS_ACCOUNT_ID_SANDPIT1 }} 
+      AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID_SANDPIT1 }} 
     steps:
       - uses: actions/checkout@v4
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          role-to-assume: arn:aws:iam::${{ env.aws_account_id }}:role/github-actions-deployment-role
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/github-actions-deployment-role
           role-session-name: GitHub_to_AWS_via_FederatedOIDC
           aws-region: ${{ env.REGION }}
       - name: deploy
@@ -58,14 +58,14 @@ jobs:
     env:
       ENVIRONMENT_NAME: ${{ needs.get_branch_name.outputs.branch }}
       ACCOUNT_NAME: 'sandpit2'
-      aws_account_id: ${{ vars.AWS_ACCOUNT_ID_SANDPIT2 }} 
+      AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID_SANDPIT2 }} 
     steps:
       - uses: actions/checkout@v4
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          role-to-assume: arn:aws:iam::${{ env.aws_account_id }}:role/github-actions-demo
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/github-actions-demo
           role-session-name: GitHub_to_AWS_via_FederatedOIDC
           aws-region: ${{ env.REGION }}
       - name: deploy
