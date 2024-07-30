@@ -27,7 +27,7 @@ jobs:
       contents: read
     env:
       ENVIRONMENT_NAME: ${{ needs.get_branch_name.outputs.branch }}
-      ACCOUNT_NAME: 'sandpit1'
+      ACCOUNT_NAME: 'sandpit1' #Dev account
       AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID_SANDPIT1 }} 
     steps:
       - uses: actions/checkout@v4
@@ -40,7 +40,6 @@ jobs:
           aws-region: ${{ env.REGION }}
       - name: deploy
         run: |
-          echo ${ECR_REPOSITORY}
           npm install
           npx cdk deploy --require-approval=never
 
@@ -57,7 +56,7 @@ jobs:
       contents: read
     env:
       ENVIRONMENT_NAME: ${{ needs.get_branch_name.outputs.branch }}
-      ACCOUNT_NAME: 'sandpit2'
+      ACCOUNT_NAME: 'sandpit2' #Prod
       AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID_SANDPIT2 }} 
     steps:
       - uses: actions/checkout@v4
@@ -70,6 +69,5 @@ jobs:
           aws-region: ${{ env.REGION }}
       - name: deploy
         run: |
-          echo ${ECR_REPOSITORY}
           npm install
-          npx cdk deploy --require-approval=never          
+          npx cdk deploy --require-approval=never
