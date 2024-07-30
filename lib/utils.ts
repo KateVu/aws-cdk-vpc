@@ -188,6 +188,9 @@ export const createPrivateSubnet = (stack: Stack, vpcid: string, vpcName: string
         vpcId: vpcid,
         mapPublicIpOnLaunch: false
     })
+    listNATGateway.forEach(gateway => {
+        subnet.node.addDependency(gateway)
+    })
     subnet.node.tryRemoveChild('RouteTableAssociation')
     subnet.node.tryRemoveChild('RouteTable')
     Tags.of(subnet).add('aws-cdk:subnet-type', ec2.SubnetType.PRIVATE_WITH_EGRESS)

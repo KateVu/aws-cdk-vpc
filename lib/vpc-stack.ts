@@ -88,19 +88,14 @@ export class VPCStack extends Stack {
     //Update map listNATGateway using AZ
     let listNATGateway = new Map<string, ec2.CfnNatGateway>()
     //waitNATGateways is for handling race condition
-    const waitNATGateways = (): boolean => {
-      vpcConfig.publicSubnets.forEach((subnetConfig) => {
-        createPublicSubnet(this, vpc.vpcId, vpcConfig, subnetConfig, publicRouteTable, listNATGateway, publicNetworkNalcs)
-      })
-      return true
-    }
+    vpcConfig.publicSubnets.forEach((subnetConfig) => {
+      createPublicSubnet(this, vpc.vpcId, vpcConfig, subnetConfig, publicRouteTable, listNATGateway, publicNetworkNalcs)
+    })
 
     //Create private subnets 
-    if (waitNATGateways()) {
-      vpcConfig.privateSubnets.forEach((subnetConfig) => {
-        createPrivateSubnet(this, vpc.vpcId, vpcConfig.vpcName, subnetConfig, listNATGateway, privateNetworkNalcs)
-      })
-    }
+    vpcConfig.privateSubnets.forEach((subnetConfig) => {
+      createPrivateSubnet(this, vpc.vpcId, vpcConfig.vpcName, subnetConfig, listNATGateway, privateNetworkNalcs)
+    })
 
     //Create data subnets
     vpcConfig.dataSubnets.forEach((subnetConfig) => {
